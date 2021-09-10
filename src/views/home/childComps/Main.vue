@@ -8,7 +8,17 @@
       ></i>
       <i class="el-icon-s-fold" @click="agreeChange(true)" v-else></i>
 
-      <div class="user">*******有限公司</div>
+      <div class="user">
+        <el-dropdown @command="handleCommand">
+          <span class="el-dropdown-link">
+            ****有限公司<i class="el-icon-caret-bottom el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item command="a">退出</el-dropdown-item>
+            <el-dropdown-item command="b">修改密码</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
     </div>
     <div class="main-nav">
       <el-tabs
@@ -76,6 +86,7 @@ export default {
     // 菜单el-menu的切换
     agreeChange(bool) {
       this.isCollapse = bool;
+      console.log(this.isCollapse, "isCollapse");
       // 保存单选按钮状态到vuex
       this.$store.commit("toggleCollapse", this.isCollapse);
 
@@ -83,22 +94,32 @@ export default {
       this.$bus.$emit("toggleWidth", this.isCollapse);
     },
 
+    // 修改密码/退出登录
+    handleCommand(command){
+      console.log(command)
+    },
+
     /**
      * func removeTab 关闭tab事件
      * params index 被点击元素在editableTabs数组的索引
      */
     removeTab(index) {
+      console.log("index:", index);
       var length = this.editableTabs.length;
       var nextTab;
       var index = parseInt(index);
       // 点击元素为数组最后一个
-      if (index == length && length > 1) {
+      if (index === length && length > 1) {
         nextTab = index - 1;
         // 设置tabactive位置
         this.editableTabsValue = String(nextTab);
         // 删除该索引在数组的元素
         this.editableTabs.splice(nextTab, 1);
         // 保存当前活跃的views
+        console.log(
+          "点击元素为数组最后一个",
+          this.editableTabs[nextTab - 1].view
+        );
         this.$store.commit("saveView", this.editableTabs[nextTab - 1].view);
         // 发出全局事件，让menu改变活跃的index
         this.$bus.$emit("activeIndex", this.editableTabs[nextTab - 1].index);
@@ -109,10 +130,29 @@ export default {
         this.editableTabsValue = String(nextTab);
         // 删除该索引在数组的元素
         this.editableTabs.splice(index - 1, 1);
+        console.log("Tabs数组：", this.editableTabs);
         // 保存当前活跃的view
-        this.$store.commit("saveView", this.editableTabs[nextTab].view);
+        console.log(
+          "点击元素是数组的中间元素",
+          this.editableTabs[nextTab - 1].view
+        );
+        this.$store.commit("saveView", this.editableTabs[nextTab - 1].view);
         // 发出全局事件，让menu改变活跃的index
-        this.$bus.$emit("activeIndex", this.editableTabs[nextTab].index);
+        this.$bus.$emit("activeIndex", this.editableTabs[nextTab - 1].index);
+      } else if (index === length && index === 1) {
+        // 点击的元素只有一个
+        // 清空tabs数组
+        (this.editableTabs = []),
+          // 并且在tabs数组尾部追加首页对象作为数组的子元素
+          this.editableTabs.push({
+            view: "Home",
+            name: "首页",
+            index: "1",
+          });
+        // 保存当前活跃的view
+        this.$store.commit("saveView", this.editableTabs[0].view);
+        // 发出全局事件，让menu改变活跃的index
+        this.$bus.$emit("activeIndex", this.editableTabs[0].index);
       }
     },
 
@@ -125,10 +165,6 @@ export default {
       this.$store.commit("saveView", this.editableTabs[e.index].view);
       // 发出全局事件
       this.$bus.$emit("activeIndex", this.editableTabs[e.index].index);
-    },
-
-    changeView() {
-      this.view = page;
     },
 
     // 为实例的index属性设置值
@@ -165,7 +201,7 @@ export default {
 <style>
 .main {
   background: rgb(236, 236, 236);
-  height: 100vh;
+  height: calc(100vh - 130px);
   position: relative;
   bottom: 0;
 }
@@ -182,6 +218,10 @@ export default {
   float: right;
 }
 
+.el-dropdown-link{
+  font-size: 16px;
+}
+
 .el-icon-s-unfold,
 .el-icon-s-fold {
   font-size: 24px;
@@ -194,6 +234,12 @@ export default {
   left: 10px;
   right: 10px;
   bottom: 5px;
+
+  overflow-y: scroll;
+}
+
+.main-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .box {
@@ -203,5 +249,9 @@ export default {
 .el-tabs__header {
   margin: 0 !important;
   padding: 5px 2px 0 !important;
+}
+
+.el-dropdown-link{
+  color: #409EFF;
 }
 </style>
